@@ -1,0 +1,61 @@
+
+
+evaluate_conditions_1:
+  # When AC_input becomes available, check the status of inverter_to_fridge
+  sequence:
+    - service: system_log.write
+      data:
+        message: "AC_input became available. Evaluating inverter_to_fridge status."
+        level: info
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
+              state: 'on'
+          sequence:
+            - service: system_log.write
+              data:
+                message: "inverter_to_fridge is ON; cutting all power sources for 10 seconds to allow motor rest."
+                level: info
+            - service: switch.turn_off
+              entity_id: switch.sonoff_1001e5d0bf  # AC_input
+            - service: switch.turn_off
+              entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
+            - delay: "00:00:10"
+            - service: switch.turn_on
+              entity_id: switch.sonoff_1001e5d0bf  # AC_input
+            - service: system_log.write
+              data:
+                message: "Delay complete; AC_input restored after motor rest."
+                level: info
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
+              state: 'off'
+          sequence:
+            - service: system_log.write
+              data:
+                message: "inverter_to_fridge is OFF; allowing AC_input immediately."
+                level: info
+            - service: switch.turn_on
+              entity_id: switch.sonoff_1001e5d0bf  # AC_input
+
+evaluate_conditions_2:
+  # When AC_input becomes unavailable, turn the inverter_to_fridge on if in good solar time
+  sequence:
+    - service: system_log.write
+      data:
+        message: "AC_input became unavailable. Checking solar time window for inverter activation."
+        level: info
+    - condition: time
+      after: '10:00:00'
+      before: '16:00:00'
+    - service: system_log.write
+      data:
+        message: "Within solar time window; activating inverter_to_fridge."
+        level: info
+    - service: switch.turn_on
+      entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
+
+

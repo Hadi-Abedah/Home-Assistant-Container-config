@@ -1,0 +1,24 @@
+# Ignore everything
+*
+
+# Un-ignore specific files in the root directory (if needed)
+!.gitignore
+
+# Un-ignore the config directory itself
+!config/
+
+# Ignore everything in config directory
+config/*
+
+# Un-ignore specific files in the config directory
+!config/configuration.yaml
+!config/automations.yaml
+!config/scenes.yaml
+!config/scripts.yaml
+
+# Un-ignore the custom_components directory and its contents
+!config/custom_components/
+!config/custom_components/**
+
+# Ensure any nested .gitignore files are tracked (if necessary)
+!config/.gitignore

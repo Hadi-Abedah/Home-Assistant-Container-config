@@ -1,0 +1,132 @@
+- alias: "Evaluate Conditions When AC_input Restarts or Becomes Available & Send Msg"
+  trigger:
+    - platform: state
+      entity_id: switch.sonoff_1001e5d0bf # AC_input
+      to: 'available'
+    - platform: state
+      entity_id: switch.sonoff_1001e5d0bf
+      to: 'off'
+  action:
+#    - variables:   # define variable that holds the current datetime
+#        inverter_available_datetime: "{{ utcnow().strftime('%Y-%m-%d %H:%M:%S') }}" 
+
+    - service: script.evaluate_conditions_1
+
+- alias: "Evaluate Conditions When AC_input Becomes Unavailable & Send Msg"
+  trigger:
+    - platform: state
+      entity_id: switch.sonoff_1001e5d0bf # AC_input
+      to: 'unavailable'
+  action:  
+    - delay: '00:00:05'
+    - service: script.evaluate_conditions_2
+
+- alias: "Turn On inverter_to_fridge in the morning if Sun is good"
+  trigger:
+    - platform: time
+      at: "10:30:00"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.home_hours_of_sun_day_0
+      above: 9
+    - condition: numeric_state
+      entity_id: sensor.home_cloud_cover_day_0
+      below: 21
+    - condition: numeric_state
+      entity_id: sensor.home_solar_irradiance_day_0
+      above: 3000
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
+  mode: single
+
+- alias: "Turn On inverter_to_fridge in the noon if Sun is moderate"
+  trigger:
+    - platform: time
+      at: "01:30:00"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.home_hours_of_sun_day_0
+      above: 5
+    - condition: numeric_state
+      entity_id: sensor.home_cloud_cover_day_0
+      below: 35
+    - condition: numeric_state
+      entity_id: sensor.home_solar_irradiance_day_0
+      above: 3000
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
+  mode: single
+
+- alias: "Turn Off inverter_to_fridge at night"
+  trigger:
+    - platform: time
+      at: "16:20:00"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
+  mode: single
+
+
+#    - service: notify.WhatsApp
+#      data:
+#        message: 'The grid power is ON'
+#    - service: input_datetime.set_datetime
+#      data:
+#        entity_id: input_datetime.datetime_when_inverter_input_is_available
+#        datetime: "{{ inverter_available_datetime }}"
+
+#- alias: "Send Msg When inverter_input Becomes Unavailable & Update Periods"
+#  trigger:
+#    - platform: state
+#      entity_id: switch.sonoff_1001e5d0bf  # inverter_input
+#      to: 'unavailable' 
+#
+#  action:
+#    - variables:
+#        inverter_input_latest_available_datetime: "{{ state_attr('input_datetime.datetime_when_inverter_input_is_available', 'timestamp') | float }}"
+#        duration: "{{ utcnow().timestamp() - inverter_input_latest_available_datetime }}"  # Duration in seconds
+#        current_period: "{{ state_attr('input_datetime.inverter_input_available_periods', 'timestamp') | float }}"  # Existing stored period
+#
+#    # Notify via WhatsApp
+#    - service: notify.WhatsApp
+#      data:
+#        message: >
+#          {% set hours = (duration // 3600) | int %}
+#          {% set minutes = ((duration % 3600) // 60) | int %}
+#          {% set seconds = (duration % 60) | int %}
+#          The grid power is OFF. It was available for {{ hours }} hours, {{ minutes }} minutes, and {{ seconds }} seconds.
+#
+#    # Update the input_datetime with the new accumulated period
+#    - service: input_datetime.set_datetime
+#      data:
+#        entity_id: input_datetime.inverter_input_available_periods
+#        datetime: >
+#          {{ (current_period + duration) | timestamp_custom('%Y-%m-%d %H:%M:%S', True) }}
+#
+#- alias: "Send Total Inverter Input Availability & Reset to Zero at Midnight"
+#  trigger:
+#    platform: time
+#    at: '00:00:00'  # Runs at midnight
+#  action:
+#    # Send WhatsApp message with total availability periods
+#    - service: notify.WhatsApp
+#      data:
+#        message: >
+#          {% set total_duration = as_timestamp(states('input_datetime.inverter_input_available_periods')) - as_timestamp('1970-01-01 00:00:00') %}
+#          {% set hours = (total_duration // 3600) | int %}
+#          {% set minutes = ((total_duration % 3600) // 60) | int %}
+#          {% set seconds = (total_duration % 60) | int %}
+#          The total inverter input availability period for today was {{ hours }} hours, {{ minutes }} minutes, and {{ seconds }} seconds.
+#    
+#    # Reset the input_datetime to zero
+#    - service: input_datetime.set_datetime
+#      data:
+#        entity_id: input_datetime.inverter_input_available_periods
+#        datetime: "1970-01-01 00:00:00"  # Reset to Unix epoch (zero datetime)
+#
+#
