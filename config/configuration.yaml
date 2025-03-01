@@ -1,4 +1,3 @@
-
 # Loads default set of integrations. Do not remove.
 default_config:
 
@@ -25,14 +24,24 @@ notify:
 #      phone: !secret my_phone_num     # Replace with your phone number
 #      apikey: !secret my_api_key      # Replace with your CallMeBot API key
 
-# This is an integration that lets me store and manipulate datetime values
-input_datetime:
-  datetime_when_inverter_input_is_available:
-    name: Datetime When Inverter Input Is Available
-    has_date: true
-    has_time: true
-# This will sum all periods that inverter_input was available in 
-  inverter_input_available_periods:
-    name: inverter_input_available_periods
-    has_date: true
-    has_time: true
+# some helper entities to record time related data
+input_number:
+  ac_input_available_timestamp:          # record when the AC input becomes available in seconds since epoch
+    name: AC Input Available Timestamp
+    initial: 0
+    min: 0
+    max: 2147483647
+    step: 1
+
+  ac_input_total_available_seconds:     # holds AC_input total available seconds since last midnight
+    name: AC Input Total Available Seconds
+    initial: 0
+    min: 0
+    max: 86400
+    step: 1
+
+
+shell_command:
+  log_ac_input_total_available_seconds: >
+    bash -c 'echo "{{ now().strftime("%Y-%m-%d") }},{{ states("input_number.ac_input_total_available_seconds") }}" >> /config/ac_input_log.csv'
+
