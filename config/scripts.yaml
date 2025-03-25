@@ -39,15 +39,42 @@ evaluate_conditions_2:
     - condition: and
       conditions:
         - condition: time
-          after: '10:00:00'
-          before: '16:00:00'
+          after: '07:55:00'
+          before: '16:30:00'
         - condition: numeric_state
           entity_id: sensor.home_cloud_cover
           below: 20
-    - delay: '00:00:10'
+    - delay: '00:00:20'
     - service: switch.turn_on
       target:
         entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
 
 
 
+evaluate_conditions_3:
+# When AC_input becomes unavailable, turn the inverter_to_fridge on for some time if AC_input was up enouogh
+  sequence:
+    # 1) Check time: after 16:00 *OR* before 08:00
+    - condition: or
+      conditions:
+        - condition: time
+          after: '16:30:00'
+        - condition: time
+          before: '07:55:00'
+
+    # 2) Check that (current time - saved timestamp) > 2 hours
+    - condition: template
+      value_template: >
+        {{ ( now().timestamp() - states('input_number.ac_input_available_timestamp') | float ) > 3600 }}
+    
+    - delay: '00:01:00' # allow the motor to rest for 1 min
+    # 3) If both conditions are true: turn on inverter, wait 120 min, turn it off
+    - service: switch.turn_on
+      target:
+        entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge
+
+    - delay: '02:00:00'
+
+    - service: switch.turn_off
+      target:
+        entity_id: switch.sonoff_1001e606c3  # inverter_to_fridge

@@ -30,21 +30,25 @@
         value: "{{ (current_total + duration) | int }}"
     - delay: '00:00:05'
     - service: script.evaluate_conditions_2
+    - service: script.evaluate_conditions_3
 
 - alias: "Turn On inverter_to_fridge in the morning if Sun is good"
   trigger:
     - platform: time
-      at: "10:30:00"
+      at: "10:00:00"
   condition:
     - condition: numeric_state
       entity_id: sensor.home_hours_of_sun_day_0
-      above: 9
+      above: 7
     - condition: numeric_state
       entity_id: sensor.home_cloud_cover_day_0
       below: 21
     - condition: numeric_state
       entity_id: sensor.home_solar_irradiance_day_0
       above: 3000
+    - condition: state 
+      entity_id: switch.sonoff_1001e5d0bf  # AC_input
+      state: 'unavailable'
   action:
     - service: switch.turn_on
       target:
@@ -54,7 +58,7 @@
 - alias: "Turn On inverter_to_fridge in the noon if Sun is moderate"
   trigger:
     - platform: time
-      at: "13:30:00"
+      at: "12:30:00"
   condition:
     - condition: numeric_state
       entity_id: sensor.home_hours_of_sun_day_0
@@ -65,6 +69,9 @@
     - condition: numeric_state
       entity_id: sensor.home_solar_irradiance_day_0
       above: 3000
+    - condition: state 
+      entity_id: switch.sonoff_1001e5d0bf  # AC_input
+      state: 'unavailable'
   action:
     - service: switch.turn_on
       target:
@@ -74,7 +81,7 @@
 - alias: "Turn Off inverter_to_fridge at night"
   trigger:
     - platform: time
-      at: "16:20:00"
+      at: "17:30:00"
   action:
     - service: switch.turn_off
       target:
